@@ -126,12 +126,12 @@ init: ;partie du code qui va servir à initialiser le jeu
     SHR AX,1
     mov bh, al ; je stock dans la valeur haute de BX (bh) la valeur basse de AX (ah)
     mov [snake_head],BX ; je stock dans snake_head la valeur contenu dans BX (BH et BL)
-    movzx eax, bh
-    movzx ecx, bl
-    mov edx, map_width
-    imul eax, edx
-    add eax, ecx
-    mov byte [map + eax], 1
+    movzx eax, bh ; étend bh (valeur haute de bx qui contiens la position y de snake_head) à eax afin de pouvoir faire des calcules en 32 bits
+    movzx ecx, bl ; étend bl (valeur basse de bx qui contiens la position x de snake_head) à ecx 
+    mov edx, map_width ; stock map_width dans edx afin de calculer l'index de mon tableau map correspondant à la position de snake_head
+    imul eax, edx ; multipli eax à edx, le résultat de l'oppération sera stocké dans eax (snake_head.y + map_width)
+    add eax, ecx ; ajoute ecx à eax, le résultat de l'oppération sera stocké dans eax ((snake_head.y + map_width)+snake_head.x) 
+    mov byte [map + eax], 1 ; mets à 1 l'octet située à l'emplacement map[snake_head.y][snake_head.x] (adresse mémoire obtenue avec les oppérations précédentes)
 
     mov word [fruit], 0; je mets à zero la valeur de fruit
     call generate_fruit
