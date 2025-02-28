@@ -194,14 +194,14 @@ move_snake:
     ;oppération pour déplacer le serpent ici
     mov ax, [snake_head]
     ; mets à 0 l'ancien emplacement dans map
-    movzx ebx, ah
-    movzx ecx, al
-    mov edx, map_width
+    movzx ebx, ah ; étend ah (position y de snake_head) à ebx (pour des calcules en 32 bits)
+    movzx ecx, al ; étend ah (position x de snake_head) à ecx (pour des calcules en 32 bits)
+    mov edx, map_width ; calcule l'index du tableau map pour la position y x de snake_head (map_width * snake_head.y + snake_head.x)
     imul ebx, edx
     add ebx, ecx
-    mov byte [map + ebx], 0
+    mov byte [map + ebx], 0 ; mets à 0 l'ancienne valeur de snake_head dans le tableau
 
-    mov al, [direction]
+    mov al, [direction] ; regarde la direction du serpent
     cmp al, 0
     je move_snake_up
     cmp al, 1
@@ -211,12 +211,12 @@ move_snake:
     cmp al, 3
     je move_snake_right
     move_snake_up:
-        mov ax, [snake_head]
-        dec ah
-        cmp ah, 0
+        mov ax, [snake_head] ; récupère dans ax la valeure de la variable snake_head
+        dec ah ; décrémente la valeur haute de ax (snake_head.y)
+        cmp ah, 0 ; si snake_head.y = 0 va au label move_snake_death
         je move_snake_death
-        mov [snake_head], ax
-        jmp update_snake_in_map
+        mov [snake_head], ax ; mets à jour la variable snake_head
+        jmp update_snake_in_map ; va au label update_snake_in_map
 
     move_snake_down:
         mov ax, [snake_head]
@@ -244,12 +244,12 @@ move_snake:
 
     update_snake_in_map:
         ; mets à jour le nouvel emplacement dans map
-        movzx ebx, ah
-        movzx ecx, al
-        mov edx, map_width
+        movzx ebx, ah ; étend ah (position y de snake_head) à ebx (pour des calcules en 32 bits)
+        movzx ecx, al ; étend al (position x de snake_head) à ecx
+        mov edx, map_width ; calcule l'index du tableau map pour la position y et x de snake_head
         imul ebx, edx
         add ebx, ecx
-        mov byte [map + ebx], 1
+        mov byte [map + ebx], 1 ; mets à jour la valeur de map[snake_head.y][snake_head.x] à 1
 
     call draw_map
 
@@ -306,61 +306,61 @@ draw_map:
     xor rax, rax ; compteur de boucle y
     xor rbx, rbx ; compteur de boucle x
     draw_loop_y:
-        cmp rbx, map_width
-        jne draw_loop_x
-        inc rax
-        push rax
-        jmp send_sequence
+        cmp rbx, map_width  ; compare le compteur de boucle x avec la taille de la map
+        jne draw_loop_x ; Si le compteur de boucle n'est pas égale à map_width, passe au label draw_loop_x
+        inc rax ; incrémente le compteur de boucle y
+        push rax ; sauvegarde l'état du compteur de boucle y dans la stack
+        jmp send_sequence ; passe au laber send_sequence
         draw_loop_x:
             ;dessinner les contours de la map
-            cmp rax,0
-            je draw_line
-            cmp rax, map_height-1
-            je draw_line
-            cmp rbx,0
-            je draw_col
-            cmp rbx, map_width-1
-            je draw_col
+            cmp rax,0 ; compare le compteur de boucle y à 0 (première ligne) 
+            je draw_line ; Si égale, passe au label draw_line
+            cmp rax, map_height-1 ; regarde si on est à la dernière ligne
+            je draw_line ; si oui, passe au label draw_line
+            cmp rbx,0 ; compare le compteur de boucle x à 0
+            je draw_col ; si égale, passe au label draw_col
+            cmp rbx, map_width-1 ; compare si on est à la dernière colone
+            je draw_col ; si oui, passe au label draw_col
 
-            ;dessiner les éléments du jeux (fruit et serpent)
-            push rax
-            mov rdx, map_width
+            ;dessiner les éléments du jeux (fruit et serpent, cette partie du code ne peux s'executer que si on ne déssine ni une ligne, ni une colone)
+            push rax ; sauvegarde l'état du compteur de boucle y dans la stack
+            mov rdx, map_width ; détermine l'index du tableau map (map_width * compteur de boucle Y + compteur de boucle X)
             imul rax, rdx
             add rax, rbx
-            cmp byte [map+rax], 0
+            cmp byte [map+rax], 0 ; Si map[loopy][loopx] = 0 va à draw_space
             je draw_space
-            cmp byte [map+rax], 3
+            cmp byte [map+rax], 3 ; Si map[loopy][loopx] = 3 va à draw_fruit
             je draw_fruit
-            cmp byte [map+rax] , 1
+            cmp byte [map+rax] , 1 ; Si map[loopy][loopx] = 1 va à draw_snake_head
             je draw_snake_head
-
-            pop rax
-            inc rbx
-            jmp draw_loop_y
+            ;Si aucune des conditions précédente n'est rencontrée :
+            pop rax ; récupère la valeur du compteur de boucle Y précédement stocké dans la Stack et place le dans rax
+            inc rbx ; incrémente le compteur de boucle x
+            jmp draw_loop_y ; continu la boucle (retourne au label draw_loop_y
             
     draw_line:
-        mov byte [cursor_sequence + rbx], '_'
-        inc rbx
-        jmp draw_loop_y
+        mov byte [cursor_sequence + rbx], '_' ; Modifi 1 octet à la chaine de caractère contenue à l'adresse mémoire cursor_sequence + compteur de boucle X avec la caractère '_'
+        inc rbx  ; incrémente le compteur de boucle x
+        jmp draw_loop_y ; continu la boucle (retourne au label draw_loop_y
     draw_col:
-        mov byte [cursor_sequence + rbx], '|'
-        inc rbx
-        jmp draw_loop_y
+        mov byte [cursor_sequence + rbx], '|' ; Modifi 1 octet à la chaine de caractère contenue à l'adresse mémoire cursor_sequence + compteur de boucle X avec la caractère '|'
+        inc rbx ; incrémente le compteur de boucle x
+        jmp draw_loop_y ; continu la boucle (retourne au label draw_loop_y
     draw_space:
-        mov byte [cursor_sequence + rbx], ' '
-        inc rbx
-        pop rax
-        jmp draw_loop_y
+        mov byte [cursor_sequence + rbx], ' ' ; Modifi 1 octet à la chaine de caractère contenue à l'adresse mémoire cursor_sequence + compteur de boucle X avec la caractère espace
+        inc rbx ; incrémente le compteur de boucle x
+        pop rax ; récupère la valeur du compteur de boucle Y précédement stocké dans la Stack et place le dans rax
+        jmp draw_loop_y ; continu la boucle (retourne au label draw_loop_y
     draw_fruit:
-        mov byte [cursor_sequence + rbx], '+'
-        inc rbx
-        pop rax
-        jmp draw_loop_y
+        mov byte [cursor_sequence + rbx], '+' ; Modifi 1 octet à la chaine de caractère contenue à l'adresse mémoire cursor_sequence + compteur de boucle X avec la caractère '+'
+        inc rbx ; incrémente le compteur de boucle x
+        pop rax ; récupère la valeur du compteur de boucle Y précédement stocké dans la Stack et place le dans rax
+        jmp draw_loop_y ; continu la boucle (retourne au label draw_loop_y
     draw_snake_head:
-        mov byte [cursor_sequence + rbx], 'o'
-        inc rbx
-        pop rax
-        jmp draw_loop_y
+        mov byte [cursor_sequence + rbx], 'o' ; Modifi 1 octet à la chaine de caractère contenue à l'adresse mémoire cursor_sequence + compteur de boucle X avec la caractère 'o'
+        inc rbx ; incrémente le compteur de boucle x
+        pop rax ; récupère la valeur du compteur de boucle Y précédement stocké dans la Stack et place le dans rax
+        jmp draw_loop_y ; continu la boucle (retourne au label draw_loop_y
 
     send_sequence:
         mov word [cursor_sequence + rbx], 0xA ; ajout d'un saut le ligne à la fin de la séquence
@@ -369,11 +369,11 @@ draw_map:
         mov rsi, cursor_sequence    ; Adresse du message
         mov rdx, 22 ; Longueur du message
         syscall         ; Appel système
-        xor rbx,rbx
-        pop rax
-        cmp rax, map_height
-        je end_loop
-        jmp draw_loop_x
+        xor rbx,rbx ; remet à 0 le compteur de boucle x
+        pop rax ; récupère la valeur du compteur de boucle Y précédement stocké dans la Stack et place le dans rax
+        cmp rax, map_height ; regarde si on est à la dernière ligne (dernière élément du tableau map)
+        je end_loop ; si oui passe au label end_loop (termine la boucle)
+        jmp draw_loop_x ; retourne au label draw_loop_x (pas besoin de repasser par draw_loop_y, on viens de remetre le compteur de boucle x à 0, il ne vaut donc pas map_width)
     end_loop:
     ret
 
