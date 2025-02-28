@@ -67,7 +67,7 @@ _start:
     mov rdx, termios ; Adresse des attributs du terminal
     syscall              ; Appel système
 
-    call init
+    call init ; appel de la "fonction" init, quand le programme arrivera à l'instruction ret, il reviendra executer le code situé à la ligne suivante
 
     game_loop:
         call get_elapsed_time ; appel de la fonction get_elapsed_time
